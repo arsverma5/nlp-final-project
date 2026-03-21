@@ -10,7 +10,10 @@ def main():
     
     # print(recipe_df["ingredients"][0])
 
-    print(repro.parse_quantities(recipe_df["ingredients"][0]))
+    ingredients = repro.parse_quantities(recipe_df["ingredients"][0])
+    print(ingredients)
+
+    print(repro.extract_ing_features(ingredients))
 
 if __name__ == "__main__":
     main()

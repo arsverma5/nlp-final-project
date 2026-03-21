@@ -35,9 +35,9 @@ class RecipeProcessor:
             "fl oz": "fluid_ounce",
         }
         self.base_units = {
-            # "VOLUME_BASE": self.ureg.milliliter,
+            "VOLUME_BASE": self.ureg.milliliter,
             "WEIGHT_BASE": self.ureg.gram,
-            "TEMP_BASE": self.ureg.degC,
+            # "TEMP_BASE": self.ureg.degC,
         }
         
 
@@ -56,41 +56,78 @@ class RecipeProcessor:
         try:
             qty = amount * self.ureg.parse_expression(pint_unit)
             
-            # convert to base unit depending on dimensionality
+            # match to base unit
             if qty.dimensionality == self.ureg.milliliter.dimensionality:
                 return qty.to(self.base_units["VOLUME_BASE"]).magnitude
             elif qty.dimensionality == self.ureg.gram.dimensionality:
                 return qty.to(self.base_units["WEIGHT_BASE"]).magnitude
             else:
-                return qty.magnitude  # already dimensionless or unknown
+                return qty.magnitude 
         except Exception:
             return None
         
-    def parse_quantities(self, text, time_label=None, unit_map=None):
-        parsed = parse_ingredient(text, imperial_units=True)
+    def parse_quantities(self, text):
+        """
+        Using ingredient-parser to tag our
+        data.
+        
+        :param self: Description
+        :param text: Description
+        """
+        parsed = parse_ingredient(text)
+        ingredients = []
 
-        total_volume = 0.0
-        total_weight = 0.0
-        item_count = 0
+        # extract names and amnt
+        names = parsed.name
+        amounts = parsed.amount
 
-        for amt in parsed.amount:
-            if amt.quantity is None:
-                item_count += 1
-                continue
+        for i, name_obj in enumerate(names):
 
-            amount = float(amt.quantity)
-            unit = str(amt.unit) if amt.unit else None
+            name = name_obj.text if name_obj else None
 
-            normalized = self.normalize_quantities(amount, unit) if unit else None
+            quantity = None
+            unit = None
 
-            if unit and unit.lower() in ("cup", "cups", "tbsp", "tablespoon", "tsp", "ml", "l", "fl oz"):
-                total_volume += normalized or 0.0
-            elif unit and unit.lower() in ("g", "kg", "oz", "ounce", "lb", "pound"):
-                total_weight += normalized or 0.0
-            else:
-                item_count += 1
+            if i < len(amounts):
+                amt = amounts[i]
 
-        return [total_volume, total_weight, item_count]
+                if amt.quantity:
+                    quantity = float(amt.quantity)
+
+                if amt.unit:
+                    unit = str(amt.unit)
+
+            ingredients.append({
+                "name": name,
+                "quantity": quantity,
+                "unit": unit
+            })
+
+        return ingredients
+    
+    def extract_ing_features(self, ingredients):
+        names = []
+        quantities = []
+
+        for ing in ingredients:
+
+            if ing["name"]:
+                names.append(ing["name"].lower())
+
+            if ing["quantity"] and ing["unit"]:
+                normalized = self.normalize_quantities(
+                    ing["quantity"],
+                    ing["unit"]
+                )
+
+                if normalized:
+                    quantities.append(normalized)
+
+        return {
+            "ingredients": names,
+            "ingredient_count": len(names),
+            "quantities": quantities
+        }
     
     def filter_measurements(self, text):
         """
