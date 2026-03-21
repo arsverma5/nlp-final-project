@@ -5,7 +5,7 @@ from pint import UnitRegistry
 # pip install transformers
 from transformers import pipeline 
 # python -m pip install ingredient_parser_nlp
-from ingredient_parser import parse_ingredient
+from ingredient_parser import parse_multiple_ingredients, parse_ingredient
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
@@ -67,27 +67,25 @@ class RecipeProcessor:
             return None
         
     def parse_quantities(self, text, time_label=None, unit_map=None):
-        """
-        Using the pint library, parse the ing and
-        return the quantities as feature vectors.
-        """
-        parsed = parse_ingredient(text)
+        parsed = parse_ingredient(text, imperial_units=True)
 
+        total_volume = 0.0
+        total_weight = 0.0
         item_count = 0
 
-        for ingredient in parsed:
-            amount = ingredient.amount  
-            unit = ingredient.unit
-
-            if amount is None:
+        for amt in parsed.amount:
+            if amt.quantity is None:
                 item_count += 1
                 continue
 
-            normalized = self.normalize_quantities(amount, unit)
+            amount = float(amt.quantity)
+            unit = str(amt.unit) if amt.unit else None
 
-            if unit and unit.lower() in ("cup", "cups", "tbsp", "tsp", "ml", "l", "fl oz"):
+            normalized = self.normalize_quantities(amount, unit) if unit else None
+
+            if unit and unit.lower() in ("cup", "cups", "tbsp", "tablespoon", "tsp", "ml", "l", "fl oz"):
                 total_volume += normalized or 0.0
-            elif unit and unit.lower() in ("g", "kg", "oz", "lb", "lbs"):
+            elif unit and unit.lower() in ("g", "kg", "oz", "ounce", "lb", "pound"):
                 total_weight += normalized or 0.0
             else:
                 item_count += 1
