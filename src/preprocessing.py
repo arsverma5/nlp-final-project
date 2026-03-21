@@ -73,11 +73,11 @@ class RecipeProcessor:
         """
         parsed = parse_ingredient(text)
 
-        item_count   = 0
+        item_count = 0
 
         for ingredient in parsed:
             amount = ingredient.amount  
-            unit   = ingredient.unit
+            unit = ingredient.unit
 
             if amount is None:
                 item_count += 1
@@ -93,7 +93,7 @@ class RecipeProcessor:
                 item_count += 1
 
         return [total_volume, total_weight, item_count]
-
+    
     def filter_measurements(self, text):
         """
         Removes units from the raw text and returns

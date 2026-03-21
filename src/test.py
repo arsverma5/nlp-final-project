@@ -1,3 +1,16 @@
 # test.py
 
-import preprocessing
+from preprocessing import RecipeProcessor
+import pandas as pd
+
+def main():
+    repro = RecipeProcessor()
+
+    recipe_df = pd.read_csv("data/raw/recipes.csv")
+    
+    # print(recipe_df["ingredients"][0])
+
+    print(repro.test_parse(recipe_df["ingredients"][0]))
+
+if __name__ == "__main__":
+    main()
