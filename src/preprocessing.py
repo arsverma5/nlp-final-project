@@ -114,6 +114,7 @@ class RecipeProcessor:
             if ing["name"]:
                 names.append(ing["name"].lower())
 
+            # normalize by quantity and unit lookup
             if ing["quantity"] and ing["unit"]:
                 normalized = self.normalize_quantities(
                     ing["quantity"],
@@ -136,7 +137,8 @@ class RecipeProcessor:
         function is primarily for embedding 
         building.
         """
-        # remove patterns like "2 cups", "1.5 lbs", "350°F", "45 min"
+        # remove mentions of units to extract all 
+        # non-measurement related strings
         text = re.sub(r'\d+\.?\d*\s*(cups?|tbsp|tsp|oz|lbs?|g|kg|ml|°[FCfc]|min|minutes?|hours?)', '', text)
         text = re.sub(r'\b\d+\.?\d*\b', '', text)
         text = re.sub(r'\s+', ' ', text).strip()
