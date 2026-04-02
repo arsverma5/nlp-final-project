@@ -12,7 +12,7 @@ from sklearn.metrics import (
 
 from preprocessing import RecipeProcessor, TIME_LABELS
 
-CSV_PATH  = "../data/raw/recipes.csv"
+CSV_PATH  = "../data/raw/recipes_augmented.csv"
 TEST_SIZE = 0.2
 RANDOM_STATE = 42
 FIGURES_DIR = "../figures"   
