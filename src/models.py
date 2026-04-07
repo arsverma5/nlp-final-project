@@ -10,7 +10,7 @@ from sklearn.metrics import (
     accuracy_score, f1_score, classification_report, ConfusionMatrixDisplay,
 )
 
-from preprocessing import RecipeProcessor, TIME_LABELS
+from preprocessing import RecipeProcessor, TIME_LABELS, RecipeBERTEncoder
 
 CSV_PATH  = "../data/raw/recipes_augmented.csv"
 TEST_SIZE = 0.2
@@ -64,12 +64,13 @@ def load_and_prepare(csv_path: str, processor: RecipeProcessor):
     )
 
     # text features
-    print("Build corpus and fit TF-IDF")
+    print("Building corpus, fitting TF-IDF, and encoding with RecipeBERT...")
     corpus = processor.build_corpus(df["ingredients"], df["directions"])
     tfidf = processor.fit_tfidf(corpus)
-
+    encoder = RecipeBERTEncoder()
+    bert_embeddings = encoder.encode(corpus)
     scalar = processor.build_scalar_features(df)
-    X = processor.hstack_features(tfidf, scalar)
+    X = processor.hstack_features(tfidf, scalar, bert_embeddings)
 
     tfidf_names = processor.get_feature_names()
     scalar_names = [c for c in ["time_mention_count", "ingredient_count"] if c in df.columns]

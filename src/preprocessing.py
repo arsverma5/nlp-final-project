@@ -1,14 +1,17 @@
-# pip install pint ingredient_parser_nlp scikit-learn scipy
+# pip install pint ingredient_parser_nlp scikit-learn scipy transformers torch
 from pint import UnitRegistry
 from ingredient_parser import parse_ingredient
-from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.preprocessing import StandardScaler, LabelEncoder, normalize
 from sklearn.decomposition import PCA
 from sklearn.feature_extraction.text import TfidfVectorizer
 from scipy.sparse import hstack, csr_matrix
+from transformers import AutoTokenizer, AutoModel
+import torch
 
 import numpy as np
 import re
 import pandas as pd
+import os
 
 
 
@@ -16,12 +19,46 @@ import pandas as pd
 TIME_BINS   = [0, 30, 60, 120, float("inf")]
 TIME_LABELS = ["Quick (<=30 min)", "Medium (31-60 min)", "Long (61-120 min)", "Very Long (>120 min)"]
 
+RECIPE_BERT_MODEL = "alexdseo/RecipeBERT"
+class RecipeBERTEncoder:
+    def __init__(self, model_name: str = RECIPE_BERT_MODEL, batch_size: int = 128, device: str = None):
+        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+        self.batch_size = batch_size
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.model = AutoModel.from_pretrained(model_name).to(self.device)
+        self.model.eval()
+
+    def encode(self, texts: list[str]) -> np.ndarray:
+        """
+        Encode a list of strings into a (N, 768) numpy array using
+        the [CLS] token embedding from RecipeBERT.
+        """
+        all_embeddings = []
+        for i in range(0, len(texts), self.batch_size):
+            batch = texts[i: i + self.batch_size]
+            inputs = self.tokenizer(
+                batch,
+                return_tensors="pt",
+                truncation=True,
+                max_length=512,
+                padding=True,
+                truncation_side="right"
+            ).to(self.device)
+            with torch.no_grad():
+                outputs = self.model(**inputs)
+            attention_mask = inputs["attention_mask"].unsqueeze(-1).float()
+            token_embeddings = outputs.last_hidden_state
+            mean_embeddings = (token_embeddings * attention_mask).sum(dim=1) / attention_mask.sum(dim=1)
+            mean_embeddings = mean_embeddings.cpu().numpy()
+            all_embeddings.append(mean_embeddings)
+            print(f"  RecipeBERT encoded {min(i + self.batch_size, len(texts))}/{len(texts)}")
+        return np.vstack(all_embeddings)
 
 class RecipeProcessor:
     def __init__(self, n_components=100, tfidf_max_features=5000):
         self.scaler = StandardScaler(with_mean=False)  
         self.pca = PCA(n_components=n_components)
-        self.vectorizer  = TfidfVectorizer(max_features=tfidf_max_features)
+        self.vectorizer = TfidfVectorizer(max_features=tfidf_max_features)
         self.label_encoder = LabelEncoder()
         self.ureg = UnitRegistry()
 
@@ -229,12 +266,12 @@ class RecipeProcessor:
 
     # TF-IDF vectorization
     def fit_tfidf(self, texts):
-        """Fit the TF-IDF vectorizer on texts and return the document-term matrix."""
-        return self.vectorizer.fit_transform(texts)
+        """Fit and normalize the TF-IDF vectorizer on texts and return the document-term matrix."""
+        return normalize(self.vectorizer.fit_transform(texts))
 
     def transform_tfidf(self, texts):
-        """Transform texts with the already-fitted TF-IDF vectorizer."""
-        return self.vectorizer.transform(texts)
+        """Transform and normalize texts with the already-fitted TF-IDF vectorizer."""
+        return normalize(self.vectorizer.transform(texts))
 
     def get_feature_names(self) -> list[str]:
         """Return TF-IDF vocabulary terms (useful for feature importance plots)."""
@@ -255,9 +292,9 @@ class RecipeProcessor:
         return df[cols].fillna(0).to_numpy(dtype=float)
 
     @staticmethod
-    def hstack_features(tfidf_matrix, scalar_array):
+    def hstack_features(tfidf_matrix, scalar_array, embeddings) -> csr_matrix:
         """
         Horizontally stack a sparse TF-IDF matrix with a dense scalar array
-        into one sparse feature matrix ready for sklearn models.
+        into one sparse feature matrix ready for sklearn models along with RecipeBERT embeddings.  
         """
-        return hstack([tfidf_matrix, csr_matrix(scalar_array)])
+        return hstack([tfidf_matrix, normalize(csr_matrix(scalar_array)), normalize(csr_matrix(embeddings))])
