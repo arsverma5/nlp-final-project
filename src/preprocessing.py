@@ -21,11 +21,10 @@ TIME_LABELS = ["Quick (<=30 min)", "Medium (31-60 min)", "Long (61-120 min)", "V
 
 RECIPE_BERT_MODEL = "alexdseo/RecipeBERT"
 class RecipeBERTEncoder:
-    def __init__(self, model_name: str = RECIPE_BERT_MODEL, batch_size: int = 128, device: str = None):
-        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+    def __init__(self, model_name: str = RECIPE_BERT_MODEL, batch_size: int = 128):
         self.batch_size = batch_size
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModel.from_pretrained(model_name).to(self.device)
+        self.model = AutoModel.from_pretrained(model_name)
         self.model.eval()
 
     def encode(self, texts: list[str]) -> np.ndarray:
@@ -43,7 +42,7 @@ class RecipeBERTEncoder:
                 max_length=512,
                 padding=True,
                 truncation_side="right"
-            ).to(self.device)
+            )
             with torch.no_grad():
                 outputs = self.model(**inputs)
             attention_mask = inputs["attention_mask"].unsqueeze(-1).float()
