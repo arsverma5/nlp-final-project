@@ -51,7 +51,7 @@ source venv/bin/activate
 pip install pandas numpy scikit-learn scipy pint ingredient-parser-nlp transformers torch seaborn matplotlib
 ```
 
-> **Note:** `torch` and `transformers` are large packages — this may take a few minutes. RecipeBERT (~440MB) will also download automatically from HuggingFace on first run.
+> **Note:** `torch` and `transformers` are large packages, this may take a few minutes. RecipeBERT (~440MB) will also download automatically from HuggingFace on first run.
 
 ---
 
