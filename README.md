@@ -58,7 +58,7 @@ pip install pandas numpy scikit-learn scipy pint ingredient-parser-nlp transform
 ## Running the Code
 
 ### Step 0: Download data
-Download `RAW_recipes.csv` from [here](https://www.kaggle.com/datasets/shuyangli94/food-com-recipes-and-user-interactions/data?select=RAW_recipes.csv) and place the file in the `data/raw` folder.
+Download `RAW_recipes.csv` from [here](https://www.kaggle.com/datasets/shuyangli94/food-com-recipes-and-user-interactions/data?select=RAW_recipes.csv) and place the unzipped file in the `data/raw` folder.
 
 ### Step 1: Augment the dataset
 Run this once before anything else. It reads `recipes.csv` and `RAW_recipes.csv`, samples 300 "Very Long" recipes, and writes `recipes_augmented.csv`.
