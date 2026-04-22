@@ -57,7 +57,7 @@ pip install pandas numpy scikit-learn scipy pint ingredient-parser-nlp transform
 
 ## Running the Code
 
-### Step 1 — Augment the dataset
+### Step 1: Augment the dataset
 Run this once before anything else. It reads `recipes.csv` and `RAW_recipes.csv`, samples 300 "Very Long" recipes, and writes `recipes_augmented.csv`.
 
 ```bash
@@ -80,7 +80,7 @@ New bucket distribution:
 Saved augmented dataset -> ../data/raw/recipes_augmented.csv
 ```
 
-### Step 2 — Train models and generate figures
+### Step 2: Train models and generate figures
 ```bash
 python models.py
 ```
@@ -88,7 +88,7 @@ python models.py
 This will:
 1. Load and preprocess `recipes_augmented.csv`
 2. Fit TF-IDF on the recipe corpus
-3. Encode all recipes with RecipeBERT (takes a few minutes — progress prints every 128 recipes)
+3. Encode all recipes with RecipeBERT (takes a few minutes, progress prints every 128 recipes)
 4. Train logistic regression (classification) and linear regression (regression)
 5. Print evaluation metrics to the terminal
 6. Save all figures to `../figures/`
@@ -138,6 +138,6 @@ All figures are saved to `figures/` automatically:
 
 ## Notes
 
-- The `UNEXPECTED` warnings from RecipeBERT on first load are expected — they refer to the MLM head weights not used during inference.
+- The `UNEXPECTED` warnings from RecipeBERT on first load are expected. They refer to the MLM head weights not used during inference.
 - `augment_data.py` only needs to be run once. If `recipes_augmented.csv` already exists, skip to Step 2.
 - All time mentions are stripped from instruction text before training to prevent label leakage.
