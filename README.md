@@ -1,4 +1,4 @@
-# [Recipe Cook Time Predictor](https://docs.google.com/document/d/1p2qCnHfHX7Lkn7fTbzbuvlSpqk7FXPlH8Mp2TTwSJMM/edit?usp=sharing)
+# Recipe Cook Time Predictor
 **CS 4120, Spring 2026. Authors: Jennifer Cui, Ethan Nguyen, Hannah Piersol, Arshia Verma**
 
 Predicts total cooking time from recipe ingredient lists and instruction text using TF-IDF + RecipeBERT embeddings and logistic regression. 
